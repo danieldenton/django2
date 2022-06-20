@@ -1,34 +1,42 @@
-from django.shortcuts import render
+import email
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.contrib.auth.models import User, auth
+from django.contrib import messages
 from .models import Feature
 
 # Create your views here.
 
 
 def index(request):
-    feature1 = Feature()
-    feature1.id = 0
-    feature1.name = "Fast"
-    feature1.details = "Our service is very quick"
-    feature1.is_true = True
-    feature2 = Feature()
-    feature2.id = 1
-    feature2.name = "Reliable"
-    feature2.details = "Our service is very reliable"
-    feature2.is_true = False
-    feature3 = Feature()
-    feature3.id = 2
-    feature3.name = "Easy to Use"
-    feature3.details = "Our service is very easy"
-    feature3.is_true = False
-    feature4 = Feature()
-    feature4.id = 3
-    feature4.name = "Affordable"
-    feature4.details = "Our service is very affordable"
-    feature4.is_true = True
-
-    features = [feature1, feature2, feature3, feature4]
+    features = Feature.objects.all()
     return render(request, 'index.html', {'features': features})
+
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        password2 = request.POST['password2']
+        if password == password2:
+            if User.objects.filter(username=username).exists():
+                messages.info(request, 'Username Taken')
+                return redirect('register')
+            elif User.objects.filter(email=email).exists():
+                messages.info(request, 'Email Taken')
+                return redirect('register')
+            else:
+                user = User.objects.create_user(
+                    username=username, password=password, email=email)
+                user.save()
+                messages.info(request, 'User Created')
+                return redirect('login')
+        else:
+            messages.info(request, 'Password not matching')
+            return redirect('register')
+    else:
+        return render(request, 'register.html')
 
 
 def counter(request):
